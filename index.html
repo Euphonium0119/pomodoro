@@ -457,6 +457,55 @@
     color: #1a1a2e;
   }
 
+  /* 颜色主题壁纸 */
+  body[data-wallpaper="ocean"] { --red: #5b9bd5; --red-glow: rgba(91, 155, 213, 0.35); }
+  body[data-wallpaper="ocean"] .bg-orb.orb1 { background: #3b82f6; }
+  body[data-wallpaper="ocean"] .bg-orb.orb2 { background: #06b6d4; }
+  body[data-wallpaper="ocean"] .progress-ring { filter: drop-shadow(0 0 20px rgba(91, 155, 213, 0.35)); }
+  body[data-wallpaper="ocean"] .session-dot.done { background: var(--blue); box-shadow: 0 0 8px var(--blue-glow); }
+  body[data-wallpaper="ocean"] .session-dot.current { background: rgba(91, 155, 213, 0.4); }
+  body[data-wallpaper="ocean"] .stat-item .num { color: var(--blue); }
+  body[data-wallpaper="ocean"] .btn-start { background: var(--blue); box-shadow: 0 4px 20px var(--blue-glow); }
+  body[data-wallpaper="ocean"] .btn-start:hover { background: #6bb5e0; }
+  body[data-wallpaper="ocean"] .setting-row input[type="range"]::-webkit-slider-thumb { background: var(--blue); box-shadow: 0 2px 8px var(--blue-glow); }
+  body[data-wallpaper="ocean"] .setting-row .val { color: var(--blue); }
+
+  body[data-wallpaper="forest"] { --red: #4ecb71; --red-glow: rgba(78, 203, 113, 0.35); }
+  body[data-wallpaper="forest"] .bg-orb.orb1 { background: #22c55e; }
+  body[data-wallpaper="forest"] .bg-orb.orb2 { background: #10b981; }
+  body[data-wallpaper="forest"] .progress-ring { filter: drop-shadow(0 0 20px rgba(78, 203, 113, 0.35)); }
+  body[data-wallpaper="forest"] .session-dot.done { background: var(--green); box-shadow: 0 0 8px var(--green-glow); }
+  body[data-wallpaper="forest"] .session-dot.current { background: rgba(78, 203, 113, 0.4); }
+  body[data-wallpaper="forest"] .stat-item .num { color: var(--green); }
+  body[data-wallpaper="forest"] .btn-start { background: var(--green); box-shadow: 0 4px 20px var(--green-glow); }
+  body[data-wallpaper="forest"] .btn-start:hover { background: #5edb80; }
+  body[data-wallpaper="forest"] .setting-row input[type="range"]::-webkit-slider-thumb { background: var(--green); box-shadow: 0 2px 8px var(--green-glow); }
+  body[data-wallpaper="forest"] .setting-row .val { color: var(--green); }
+
+  body[data-wallpaper="purple"] { --red: #a78bfa; --red-glow: rgba(167, 139, 250, 0.35); }
+  body[data-wallpaper="purple"] .bg-orb.orb1 { background: #8b5cf6; }
+  body[data-wallpaper="purple"] .bg-orb.orb2 { background: #d946ef; }
+  body[data-wallpaper="purple"] .progress-ring { filter: drop-shadow(0 0 20px rgba(167, 139, 250, 0.35)); }
+  body[data-wallpaper="purple"] .session-dot.done { background: #a78bfa; box-shadow: 0 0 8px rgba(167, 139, 250, 0.4); }
+  body[data-wallpaper="purple"] .session-dot.current { background: rgba(167, 139, 250, 0.4); }
+  body[data-wallpaper="purple"] .stat-item .num { color: #a78bfa; }
+  body[data-wallpaper="purple"] .btn-start { background: #a78bfa; box-shadow: 0 4px 20px rgba(167, 139, 250, 0.35); }
+  body[data-wallpaper="purple"] .btn-start:hover { background: #b8a0fc; }
+  body[data-wallpaper="purple"] .setting-row input[type="range"]::-webkit-slider-thumb { background: #a78bfa; box-shadow: 0 2px 8px rgba(167, 139, 250, 0.4); }
+  body[data-wallpaper="purple"] .setting-row .val { color: #a78bfa; }
+
+  body[data-wallpaper="sunset"] { --red: #f0a050; --red-glow: rgba(240, 160, 80, 0.35); }
+  body[data-wallpaper="sunset"] .bg-orb.orb1 { background: #f97316; }
+  body[data-wallpaper="sunset"] .bg-orb.orb2 { background: #ef4444; }
+  body[data-wallpaper="sunset"] .progress-ring { filter: drop-shadow(0 0 20px rgba(240, 160, 80, 0.35)); }
+  body[data-wallpaper="sunset"] .session-dot.done { background: var(--orange); box-shadow: 0 0 8px var(--orange-glow); }
+  body[data-wallpaper="sunset"] .session-dot.current { background: rgba(240, 160, 80, 0.4); }
+  body[data-wallpaper="sunset"] .stat-item .num { color: var(--orange); }
+  body[data-wallpaper="sunset"] .btn-start { background: var(--orange); box-shadow: 0 4px 20px var(--orange-glow); }
+  body[data-wallpaper="sunset"] .btn-start:hover { background: #f5b56a; }
+  body[data-wallpaper="sunset"] .setting-row input[type="range"]::-webkit-slider-thumb { background: var(--orange); box-shadow: 0 2px 8px var(--orange-glow); }
+  body[data-wallpaper="sunset"] .setting-row .val { color: var(--orange); }
+
   @media (max-width: 480px) {
     .container { padding: 32px 24px 30px; gap: 18px; border-radius: 24px; }
     .timer-wrapper { width: 220px; height: 220px; }
@@ -484,6 +533,16 @@
 
   <div class="settings-panel" id="settingsPanel">
     <div class="settings-inner">
+      <div class="setting-row">
+        <label>壁纸</label>
+        <select id="wallpaper" class="theme-select">
+          <option value="classic">🍅 经典番茄</option>
+          <option value="ocean">🌊 深海</option>
+          <option value="forest">🌿 竹林</option>
+          <option value="purple">💜 紫梦</option>
+          <option value="sunset">🌅 日落</option>
+        </select>
+      </div>
       <div class="setting-row">
         <label>主题</label>
         <select id="themeMode" class="theme-select">
@@ -578,7 +637,7 @@ function loadSettings() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch (e) {}
-  return { workMin: 25, breakMin: 5, longBreakMin: 20, longBreakInterval: 4, noiseType: 'off', noiseVolume: 40, theme: 'dark' };
+  return { workMin: 25, breakMin: 5, longBreakMin: 20, longBreakInterval: 4, noiseType: 'off', noiseVolume: 40, theme: 'dark', wallpaper: 'classic' };
 }
 
 function saveSettings(s) {
@@ -788,6 +847,7 @@ class PomodoroTimer {
 
     this.bindSettingsInputs();
     this.bindNoiseSettings();
+    this.bindWallpaperSettings();
     this.bindThemeSettings();
     this.render();
     this.renderMode();
@@ -1009,6 +1069,18 @@ class PomodoroTimer {
       noiseVolVal.textContent = noiseVolInput.value + '%';
       this.settings.noiseVolume = parseInt(noiseVolInput.value);
       saveSettings(this.settings);
+    });
+  }
+
+  bindWallpaperSettings() {
+    const wallpaperEl = document.getElementById('wallpaper');
+    wallpaperEl.value = this.settings.wallpaper || 'classic';
+    document.body.setAttribute('data-wallpaper', wallpaperEl.value);
+
+    wallpaperEl.addEventListener('change', () => {
+      this.settings.wallpaper = wallpaperEl.value;
+      saveSettings(this.settings);
+      document.body.setAttribute('data-wallpaper', wallpaperEl.value);
     });
   }
 
