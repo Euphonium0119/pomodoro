@@ -37,6 +37,16 @@
     user-select: none;
     -webkit-user-select: none;
     overflow: hidden;
+    transition: background 0.5s;
+  }
+
+  body.light-mode {
+    --bg-deep: #f0f2f5;
+    --surface: rgba(0, 0, 0, 0.03);
+    --surface-hover: rgba(0, 0, 0, 0.05);
+    --text-primary: #1a1a2e;
+    --text-secondary: rgba(0, 0, 0, 0.45);
+    --border-subtle: rgba(0, 0, 0, 0.08);
   }
 
   /* 背景动态光斑 */
@@ -56,6 +66,13 @@
   body.break-mode .bg-orb.orb2 { background: #34d399; opacity: 0.08; }
   body.long-break-mode .bg-orb.orb1 { background: var(--blue); opacity: 0.12; }
   body.long-break-mode .bg-orb.orb2 { background: #818cf8; opacity: 0.1; }
+
+  body.light-mode .bg-orb.orb1 { opacity: 0.06; }
+  body.light-mode .bg-orb.orb2 { opacity: 0.05; }
+  body.light-mode.break-mode .bg-orb.orb1 { opacity: 0.08; }
+  body.light-mode.break-mode .bg-orb.orb2 { opacity: 0.06; }
+  body.light-mode.long-break-mode .bg-orb.orb1 { opacity: 0.08; }
+  body.light-mode.long-break-mode .bg-orb.orb2 { opacity: 0.06; }
 
   .container {
     display: flex;
@@ -410,6 +427,36 @@
     color: #fff;
   }
 
+  body.light-mode .noise-select option {
+    background: #fff;
+    color: #1a1a2e;
+  }
+
+  .theme-select {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    color: var(--text-primary);
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: 'Noto Sans SC', sans-serif;
+    cursor: pointer;
+    outline: none;
+    flex: 1;
+    transition: border-color 0.3s;
+  }
+  .theme-select:hover, .theme-select:focus {
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+  .theme-select option {
+    background: #1a1a2e;
+    color: #fff;
+  }
+  body.light-mode .theme-select option {
+    background: #fff;
+    color: #1a1a2e;
+  }
+
   @media (max-width: 480px) {
     .container { padding: 32px 24px 30px; gap: 18px; border-radius: 24px; }
     .timer-wrapper { width: 220px; height: 220px; }
@@ -437,6 +484,14 @@
 
   <div class="settings-panel" id="settingsPanel">
     <div class="settings-inner">
+      <div class="setting-row">
+        <label>主题</label>
+        <select id="themeMode" class="theme-select">
+          <option value="dark">🌙 暗色</option>
+          <option value="light">☀️ 亮色</option>
+          <option value="auto">🔄 跟随系统</option>
+        </select>
+      </div>
       <div class="setting-row">
         <label>工作时长</label>
         <input type="range" id="workDuration" min="5" max="60" value="25" step="5">
@@ -523,7 +578,7 @@ function loadSettings() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch (e) {}
-  return { workMin: 25, breakMin: 5, longBreakMin: 20, longBreakInterval: 4, noiseType: 'off', noiseVolume: 40 };
+  return { workMin: 25, breakMin: 5, longBreakMin: 20, longBreakInterval: 4, noiseType: 'off', noiseVolume: 40, theme: 'dark' };
 }
 
 function saveSettings(s) {
@@ -733,6 +788,7 @@ class PomodoroTimer {
 
     this.bindSettingsInputs();
     this.bindNoiseSettings();
+    this.bindThemeSettings();
     this.render();
     this.renderMode();
     this.renderSessionDots();
@@ -953,6 +1009,30 @@ class PomodoroTimer {
       noiseVolVal.textContent = noiseVolInput.value + '%';
       this.settings.noiseVolume = parseInt(noiseVolInput.value);
       saveSettings(this.settings);
+    });
+  }
+
+  bindThemeSettings() {
+    const themeEl = document.getElementById('themeMode');
+    themeEl.value = this.settings.theme || 'dark';
+    this.mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+    const applyTheme = () => {
+      const mode = this.settings.theme || 'dark';
+      const isDark = mode === 'auto' ? this.mediaQuery.matches : mode === 'dark';
+      document.body.classList.toggle('light-mode', !isDark);
+    };
+
+    applyTheme();
+
+    themeEl.addEventListener('change', () => {
+      this.settings.theme = themeEl.value;
+      saveSettings(this.settings);
+      applyTheme();
+    });
+
+    this.mediaQuery.addEventListener('change', () => {
+      if ((this.settings.theme || 'dark') === 'auto') applyTheme();
     });
   }
 }
