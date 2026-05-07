@@ -32,8 +32,93 @@ body {
   border-radius: 30px;
   backdrop-filter: blur(10px);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  position: relative;
 }
 
+/* 设置按钮 */
+.settings-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.25s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.settings-btn:hover { background: rgba(255, 255, 255, 0.2); color: #fff; }
+.settings-btn.active { background: rgba(255, 255, 255, 0.2); color: #fff; }
+
+/* 设置面板 */
+.settings-panel {
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 280px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.settings-panel.show { display: flex; }
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.setting-row label {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+}
+.setting-row input[type="range"] {
+  flex: 1;
+  accent-color: #e74c3c;
+  height: 4px;
+}
+.setting-row .val {
+  font-size: 13px;
+  color: #e74c3c;
+  font-weight: 700;
+  min-width: 42px;
+  text-align: right;
+}
+
+/* 历史统计 */
+.stats-row {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+.stat-item {
+  text-align: center;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  min-width: 70px;
+}
+.stat-item .num {
+  font-size: 28px;
+  font-weight: 700;
+  color: #e74c3c;
+}
+.stat-item .unit {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 2px;
+}
+
+/* 进度环 */
 .timer-wrapper {
   position: relative;
   width: 300px;
@@ -67,6 +152,10 @@ body {
   stroke: #2ecc71;
 }
 
+.progress-ring .fill.long-break {
+  stroke: #3498db;
+}
+
 .timer-display {
   position: absolute;
   top: 50%;
@@ -90,6 +179,22 @@ body {
   margin-top: 6px;
   letter-spacing: 2px;
 }
+
+.session-indicator {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 10px;
+}
+.session-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: background 0.3s;
+}
+.session-dot.done { background: #e74c3c; }
+.session-dot.current { background: rgba(231, 76, 60, 0.5); }
 
 .counter {
   font-size: 14px;
@@ -158,6 +263,31 @@ body {
 </head>
 <body>
 <div class="container">
+  <button class="settings-btn" id="btnSettings" title="设置">⚙</button>
+
+  <div class="settings-panel" id="settingsPanel">
+    <div class="setting-row">
+      <label>工作时长</label>
+      <input type="range" id="workDuration" min="5" max="60" value="25" step="5">
+      <span class="val" id="workVal">25分</span>
+    </div>
+    <div class="setting-row">
+      <label>短休息</label>
+      <input type="range" id="breakDuration" min="1" max="30" value="5" step="1">
+      <span class="val" id="breakVal">5分</span>
+    </div>
+    <div class="setting-row">
+      <label>长休息</label>
+      <input type="range" id="longBreakDuration" min="10" max="45" value="20" step="5">
+      <span class="val" id="longBreakVal">20分</span>
+    </div>
+    <div class="setting-row">
+      <label>长休息间隔</label>
+      <input type="range" id="longBreakInterval" min="2" max="6" value="4" step="1">
+      <span class="val" id="longBreakIntervalVal">4个🍅</span>
+    </div>
+  </div>
+
   <div class="timer-wrapper">
     <svg class="progress-ring" viewBox="0 0 300 300">
       <circle class="bg" cx="150" cy="150" r="136"/>
@@ -167,9 +297,27 @@ body {
     <div class="timer-display">
       <div class="time" id="timeDisplay">25:00</div>
       <div class="mode-label" id="modeLabel">工作中</div>
+      <div class="session-indicator" id="sessionDots"></div>
     </div>
   </div>
+
+  <div class="stats-row">
+    <div class="stat-item">
+      <div class="num" id="statToday">0</div>
+      <div class="unit">今日</div>
+    </div>
+    <div class="stat-item">
+      <div class="num" id="statWeek">0</div>
+      <div class="unit">本周</div>
+    </div>
+    <div class="stat-item">
+      <div class="num" id="statTotal">0</div>
+      <div class="unit">总计</div>
+    </div>
+  </div>
+
   <div class="counter">今日完成 <span id="pomoCount">0</span> 个番茄</div>
+
   <div class="buttons">
     <button class="btn btn-start" id="btnStart">开始</button>
     <button class="btn btn-reset" id="btnReset">重置</button>
@@ -177,21 +325,71 @@ body {
 </div>
 
 <script>
-const WORK_MINUTES = 25;
-const BREAK_MINUTES = 5;
-const WORK_SECONDS = WORK_MINUTES * 60;
-const BREAK_SECONDS = BREAK_MINUTES * 60;
+const STORAGE_KEY = 'pomodoro_settings';
+const HISTORY_KEY = 'pomodoro_history';
 const CIRCUMFERENCE = 2 * Math.PI * 136;
 
-const MODE = { WORK: 'work', BREAK: 'break' };
+const MODE = { WORK: 'work', BREAK: 'break', LONG_BREAK: 'long-break' };
 const SOUND_NOTES = [880, 660, 990];
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return { workMin: 25, breakMin: 5, longBreakMin: 20, longBreakInterval: 4 };
+}
+
+function saveSettings(s) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+}
+
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return [];
+}
+
+function saveHistory(h) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(h));
+}
+
+function getTodayKey() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function getWeekKey() {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const mon = new Date(d.setDate(diff));
+  return mon.getFullYear() + '-' + String(mon.getMonth() + 1).padStart(2, '0') + '-' + String(mon.getDate()).padStart(2, '0');
+}
+
+function calcStats(history) {
+  const todayKey = getTodayKey();
+  const weekKey = getWeekKey();
+  let today = 0;
+  let week = 0;
+  let total = history.length;
+  for (const entry of history) {
+    if (entry.date === todayKey) today++;
+    if (entry.date >= weekKey) week++;
+  }
+  return { today, week, total };
+}
 
 class PomodoroTimer {
   constructor() {
+    this.settings = loadSettings();
+    this.history = loadHistory();
     this.mode = MODE.WORK;
-    this.remainingSeconds = WORK_SECONDS;
+    this.remainingSeconds = this.settings.workMin * 60;
     this.intervalId = null;
-    this.pomoCount = 0;
+    this.sessionPomoCount = 0;
     this.audioCtx = null;
 
     this.timeDisplay = document.getElementById('timeDisplay');
@@ -200,21 +398,30 @@ class PomodoroTimer {
     this.btnStart = document.getElementById('btnStart');
     this.btnReset = document.getElementById('btnReset');
     this.pomoCountEl = document.getElementById('pomoCount');
+    this.btnSettings = document.getElementById('btnSettings');
+    this.settingsPanel = document.getElementById('settingsPanel');
+    this.sessionDots = document.getElementById('sessionDots');
 
     this.progressCircle.setAttribute('stroke-dasharray', CIRCUMFERENCE);
 
     this.btnStart.addEventListener('click', () => this.toggleStart());
     this.btnReset.addEventListener('click', () => this.reset());
+    this.btnSettings.addEventListener('click', () => this.toggleSettings());
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && this.intervalId) this.pause();
     });
 
+    this.bindSettingsInputs();
     this.render();
     this.renderMode();
+    this.renderSessionDots();
+    this.updateStats();
   }
 
   get totalSeconds() {
-    return this.mode === MODE.WORK ? WORK_SECONDS : BREAK_SECONDS;
+    if (this.mode === MODE.LONG_BREAK) return this.settings.longBreakMin * 60;
+    if (this.mode === MODE.BREAK) return this.settings.breakMin * 60;
+    return this.settings.workMin * 60;
   }
 
   formatTime(seconds) {
@@ -230,9 +437,33 @@ class PomodoroTimer {
   }
 
   renderMode() {
-    this.progressCircle.className.baseVal = 'fill ' + this.mode;
-    this.modeLabel.textContent = this.mode === MODE.WORK ? '工作中' : '休息中';
-    this.pomoCountEl.textContent = this.pomoCount;
+    let cls = this.mode;
+    if (cls === MODE.LONG_BREAK) cls = 'long-break';
+    this.progressCircle.className.baseVal = 'fill ' + cls;
+
+    if (this.mode === MODE.WORK) this.modeLabel.textContent = '工作中';
+    else if (this.mode === MODE.LONG_BREAK) this.modeLabel.textContent = '长休息';
+    else this.modeLabel.textContent = '休息中';
+  }
+
+  renderSessionDots() {
+    const interval = this.settings.longBreakInterval;
+    let html = '';
+    for (let i = 0; i < interval; i++) {
+      let cls = 'session-dot';
+      if (i < this.sessionPomoCount) cls += ' done';
+      else if (i === this.sessionPomoCount) cls += ' current';
+      html += '<div class="' + cls + '"></div>';
+    }
+    this.sessionDots.innerHTML = html;
+  }
+
+  updateStats() {
+    const stats = calcStats(this.history);
+    document.getElementById('statToday').textContent = stats.today;
+    document.getElementById('statWeek').textContent = stats.week;
+    document.getElementById('statTotal').textContent = stats.total;
+    this.pomoCountEl.textContent = stats.today;
   }
 
   setButtonState(text, className) {
@@ -241,11 +472,7 @@ class PomodoroTimer {
   }
 
   toggleStart() {
-    if (this.intervalId) {
-      this.pause();
-    } else {
-      this.start();
-    }
+    if (this.intervalId) { this.pause(); } else { this.start(); }
   }
 
   start() {
@@ -261,7 +488,8 @@ class PomodoroTimer {
 
   reset() {
     this.pause();
-    this.remainingSeconds = this.totalSeconds;
+    this.mode = MODE.WORK;
+    this.remainingSeconds = this.settings.workMin * 60;
     this.setButtonState('开始', 'btn btn-start');
     this.render();
     this.renderMode();
@@ -280,8 +508,15 @@ class PomodoroTimer {
 
   switchMode() {
     if (this.mode === MODE.WORK) {
-      this.mode = MODE.BREAK;
-      this.pomoCount++;
+      this.sessionPomoCount++;
+      this.recordPomodoro();
+
+      if (this.sessionPomoCount >= this.settings.longBreakInterval) {
+        this.mode = MODE.LONG_BREAK;
+        this.sessionPomoCount = 0;
+      } else {
+        this.mode = MODE.BREAK;
+      }
     } else {
       this.mode = MODE.WORK;
     }
@@ -289,6 +524,16 @@ class PomodoroTimer {
     this.setButtonState('开始', 'btn btn-start');
     this.render();
     this.renderMode();
+    this.renderSessionDots();
+    this.updateStats();
+  }
+
+  recordPomodoro() {
+    const today = getTodayKey();
+    this.history.push({ date: today, ts: Date.now() });
+    const cutoff = Date.now() - 30 * 24 * 3600 * 1000;
+    this.history = this.history.filter(e => e.ts > cutoff);
+    saveHistory(this.history);
   }
 
   playSound() {
@@ -299,7 +544,8 @@ class PomodoroTimer {
       const ctx = this.audioCtx;
       ctx.resume();
 
-      SOUND_NOTES.forEach((freq, i) => {
+      const notes = this.mode === MODE.LONG_BREAK ? SOUND_NOTES.concat([660, 880, 1100]) : SOUND_NOTES;
+      notes.forEach((freq, i) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
@@ -312,9 +558,39 @@ class PomodoroTimer {
         osc.stop(ctx.currentTime + i * 0.2 + 0.3);
         osc.onended = () => { osc.disconnect(); gain.disconnect(); };
       });
-    } catch (e) {
-      // Audio not available — timer still functions
-    }
+    } catch (e) {}
+  }
+
+  toggleSettings() {
+    this.settingsPanel.classList.toggle('show');
+    this.btnSettings.classList.toggle('active');
+  }
+
+  bindSettingsInputs() {
+    const ids = ['workDuration', 'breakDuration', 'longBreakDuration', 'longBreakInterval'];
+    const valIds = ['workVal', 'breakVal', 'longBreakVal', 'longBreakIntervalVal'];
+    const suffixes = ['分', '分', '分', '个🍅'];
+    const keys = ['workMin', 'breakMin', 'longBreakMin', 'longBreakInterval'];
+
+    ids.forEach((id, i) => {
+      const input = document.getElementById(id);
+      const valEl = document.getElementById(valIds[i]);
+      input.value = this.settings[keys[i]];
+      valEl.textContent = input.value + suffixes[i];
+
+      input.addEventListener('input', () => {
+        valEl.textContent = input.value + suffixes[i];
+        this.settings[keys[i]] = parseInt(input.value);
+        saveSettings(this.settings);
+
+        this.remainingSeconds = this.totalSeconds;
+        this.pause();
+        this.setButtonState('开始', 'btn btn-start');
+        this.render();
+        this.renderMode();
+        this.renderSessionDots();
+      });
+    });
   }
 }
 
