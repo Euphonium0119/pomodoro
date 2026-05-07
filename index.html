@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>番茄闹钟</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 30px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.timer-wrapper {
+  position: relative;
+  width: 300px;
+  height: 300px;
+}
+
+.progress-ring {
+  transform: rotate(-90deg);
+  width: 300px;
+  height: 300px;
+}
+
+.progress-ring .bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 8;
+}
+
+.progress-ring .fill {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s linear, stroke 0.4s;
+}
+
+.progress-ring .fill.work {
+  stroke: #e74c3c;
+}
+
+.progress-ring .fill.break {
+  stroke: #2ecc71;
+}
+
+.timer-display {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.time {
+  font-size: 64px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.mode-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 6px;
+  letter-spacing: 2px;
+}
+
+.counter {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+}
+
+.counter span {
+  color: #e74c3c;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.buttons {
+  display: flex;
+  gap: 14px;
+}
+
+.btn {
+  padding: 12px 32px;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.25s;
+  outline: none;
+}
+
+.btn:active {
+  transform: scale(0.95);
+}
+
+.btn-start {
+  background: #e74c3c;
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+}
+
+.btn-start:hover {
+  background: #c0392b;
+  box-shadow: 0 8px 25px rgba(231, 76, 60, 0.5);
+}
+
+.btn-pause {
+  background: #f39c12;
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(243, 156, 18, 0.4);
+}
+
+.btn-pause:hover {
+  background: #e67e22;
+  box-shadow: 0 8px 25px rgba(243, 156, 18, 0.5);
+}
+
+.btn-reset {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.btn-reset:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="timer-wrapper">
+    <svg class="progress-ring" viewBox="0 0 300 300">
+      <circle class="bg" cx="150" cy="150" r="136"/>
+      <circle class="fill work" id="progressCircle" cx="150" cy="150" r="136"
+              stroke-dashoffset="0"/>
+    </svg>
+    <div class="timer-display">
+      <div class="time" id="timeDisplay">25:00</div>
+      <div class="mode-label" id="modeLabel">工作中</div>
+    </div>
+  </div>
+  <div class="counter">今日完成 <span id="pomoCount">0</span> 个番茄</div>
+  <div class="buttons">
+    <button class="btn btn-start" id="btnStart">开始</button>
+    <button class="btn btn-reset" id="btnReset">重置</button>
+  </div>
+</div>
+
+<script>
+const WORK_MINUTES = 25;
+const BREAK_MINUTES = 5;
+const WORK_SECONDS = WORK_MINUTES * 60;
+const BREAK_SECONDS = BREAK_MINUTES * 60;
+const CIRCUMFERENCE = 2 * Math.PI * 136;
+
+const MODE = { WORK: 'work', BREAK: 'break' };
+const SOUND_NOTES = [880, 660, 990];
+
+class PomodoroTimer {
+  constructor() {
+    this.mode = MODE.WORK;
+    this.remainingSeconds = WORK_SECONDS;
+    this.intervalId = null;
+    this.pomoCount = 0;
+    this.audioCtx = null;
+
+    this.timeDisplay = document.getElementById('timeDisplay');
+    this.modeLabel = document.getElementById('modeLabel');
+    this.progressCircle = document.getElementById('progressCircle');
+    this.btnStart = document.getElementById('btnStart');
+    this.btnReset = document.getElementById('btnReset');
+    this.pomoCountEl = document.getElementById('pomoCount');
+
+    this.progressCircle.setAttribute('stroke-dasharray', CIRCUMFERENCE);
+
+    this.btnStart.addEventListener('click', () => this.toggleStart());
+    this.btnReset.addEventListener('click', () => this.reset());
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && this.intervalId) this.pause();
+    });
+
+    this.render();
+    this.renderMode();
+  }
+
+  get totalSeconds() {
+    return this.mode === MODE.WORK ? WORK_SECONDS : BREAK_SECONDS;
+  }
+
+  formatTime(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  }
+
+  render() {
+    this.timeDisplay.textContent = this.formatTime(this.remainingSeconds);
+    this.progressCircle.style.strokeDashoffset =
+      CIRCUMFERENCE * (1 - this.remainingSeconds / this.totalSeconds);
+  }
+
+  renderMode() {
+    this.progressCircle.className.baseVal = 'fill ' + this.mode;
+    this.modeLabel.textContent = this.mode === MODE.WORK ? '工作中' : '休息中';
+    this.pomoCountEl.textContent = this.pomoCount;
+  }
+
+  setButtonState(text, className) {
+    this.btnStart.textContent = text;
+    this.btnStart.className = className;
+  }
+
+  toggleStart() {
+    if (this.intervalId) {
+      this.pause();
+    } else {
+      this.start();
+    }
+  }
+
+  start() {
+    this.intervalId = setInterval(() => this.tick(), 1000);
+    this.setButtonState('暂停', 'btn btn-pause');
+  }
+
+  pause() {
+    clearInterval(this.intervalId);
+    this.intervalId = null;
+    this.setButtonState('继续', 'btn btn-start');
+  }
+
+  reset() {
+    this.pause();
+    this.remainingSeconds = this.totalSeconds;
+    this.setButtonState('开始', 'btn btn-start');
+    this.render();
+    this.renderMode();
+  }
+
+  tick() {
+    this.remainingSeconds--;
+    this.render();
+
+    if (this.remainingSeconds <= 0) {
+      this.pause();
+      this.playSound();
+      this.switchMode();
+    }
+  }
+
+  switchMode() {
+    if (this.mode === MODE.WORK) {
+      this.mode = MODE.BREAK;
+      this.pomoCount++;
+    } else {
+      this.mode = MODE.WORK;
+    }
+    this.remainingSeconds = this.totalSeconds;
+    this.setButtonState('开始', 'btn btn-start');
+    this.render();
+    this.renderMode();
+  }
+
+  playSound() {
+    try {
+      if (!this.audioCtx) {
+        this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      const ctx = this.audioCtx;
+      ctx.resume();
+
+      SOUND_NOTES.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.2);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.2 + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + i * 0.2);
+        osc.stop(ctx.currentTime + i * 0.2 + 0.3);
+        osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+      });
+    } catch (e) {
+      // Audio not available — timer still functions
+    }
+  }
+}
+
+new PomodoroTimer();
+</script>
+</body>
+</html>
